@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babai Hotel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #f7f8fa, #f3e7e9);
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .cart-count {
+            display: none;
+        }
+        .cart-count.show {
+            display: inline-block;
+            animation: bounce 0.3s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .custom-button {
+            background-color: #f97316;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-button:hover {
+            transform: scale(1.05);
+            background-color: #ea580c;
+        }
+        .custom-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .custom-button.scale-on-click {
+            animation: scaleButton 0.2s ease;
+        }
+        @keyframes scaleButton {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        .section-bg {
+            background: linear-gradient(to right, #fff7ed, #fefcbf);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .dish-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dish-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+        .dish-card.shake {
+            animation: shake 0.3s ease;
+        }
+        .dish-card.highlight {
+            border: 2px solid #f97316;
+            background-color: #fefcbf;
+            animation: highlight 1s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes highlight {
+            0% { border-color: transparent; background-color: transparent; }
+            50% { border-color: #f97316; background-color: #fefcbf; }
+            100% { border-color: transparent; background-color: transparent; }
+        }
+        .cart-item-animation {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            pointer-events: none;
+            animation: moveToCart 0.8s ease forwards;
+        }
+        @keyframes moveToCart {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .popup-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .search-input {
+            background-color: white;
+            color: #1f2937;
+            padding: 8px 12px 8px 36px;
+            border-radius: 9999px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            width: 200px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+        }
+        .search-container {
+            position: relative;
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+        .no-items-message {
+            display: none;
+            text-align: center;
+            color: #b91c1c;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+        .highlight {
+            background-color: #fff7ed;
+            color: #1f2937;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .highlight:hover {
+            background-color: #f97316;
+            color: white;
+        }
+        .decorated-heading {
+            position: relative;
+            display: inline-block;
+            color: #1f2937;
+            opacity: 1;
+        }
+        .decorated-heading::before {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, #f97316, #ea580c);
+            border-radius: 2px;
+        }
+        .decorated-heading::after {
+            content: '✨';
+            position: absolute;
+            right: -20px;
+            top: -5px;
+            font-size: 16px;
+            animation: sparkle 2s infinite;
+        }
+        @keyframes sparkle {
+            0% { opacity: 0; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1); }
+        }
+        .dish-heading {
+            position: relative;
+            display: inline-block;
+            color: #1f2937;
+        }
+        .dish-heading::after {
+            content: '🍽️';
+            position: absolute;
+            right: -20px;
+            top: 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="bg-gradient-to-r from-orange-600 to-orange-800 text-white p-4 sticky top-0 z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold tracking-tight decorated-heading">
+                <span>Babai Hotel</span>
+            </h1>
+            <div class="flex space-x-6 items-center">
+                <a href="#menu" class="text-lg hover:text-orange-200 transition-colors flex items-center">
+                    <i class="ri-menu-line mr-2"></i>Menu
+                </a>
+                <a href="#store" class="text-lg hover:text-orange-200 transition-colors flex items-center">
+                    <i class="ri-store-line mr-2"></i>Store
+                </a>
+                <a href="#cart" id="cart-icon" class="text-lg hover:text-orange-200 relative transition-colors flex items-center">
+                    <i class="ri-shopping-cart-line mr-2"></i>Cart
+                    <span id="cart-count" class="cart-count bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1 ml-2">0</span>
+                </a>
+                <div class="search-container">
+                    <i class="ri-search-line search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search dishes...">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-orange-500 to-orange-700 text-white py-24">
+        <div class="container mx-auto text-center">
+            <h2 class="text-5xl font-extrabold mb-6 tracking-tight decorated-heading">
+                <span>Welcome to Babai Hotel</span>
+            </h2>
+            <p class="text-xl mb-8 font-light">
+                Savor <span class="highlight">authentic South Indian cuisine</span> at <span class="highlight">unbeatable prices</span>!
+            </p>
+            <a href="#store" class="custom-button bg-orange-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-orange-700 shadow-lg">
+                <span class="highlight">Order Now</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="py-20">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-10 text-gray-800 decorated-heading">
+                <span>Our Menu</span>
+            </h2>
+            <div class="section-bg p-8">
+                <ul class="space-y-6 text-xl text-gray-700">
+                    <li class="flex justify-between items-center">
+                        <span class="font-semibold"><span class="highlight">Masala Dosa</span></span>
+                        <span class="font-medium">₹<span class="highlight">30</span></span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="font-semibold"><span class="highlight">Ghee Karam Dosa</span></span>
+                        <span class="font-medium">₹<span class="highlight">30</span></span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="font-semibold"><span class="highlight">Egg Dosa</span></span>
+                        <span class="font-medium">₹<span class="highlight">30</span></span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="font-semibold"><span class="highlight">Poori (2 pieces)</span></span>
+                        <span class="font-medium">₹<span class="highlight">30</span></span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="font-semibold"><span class="highlight">2 Idli + 1 Vada</span></span>
+                        <span class="font-medium">₹<span class="highlight">20</span></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Store Section -->
+    <section id="store" class="py-20 bg-gray-100">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-10 text-gray-800 decorated-heading">
+                <span>Our Dishes</span>
+            </h2>
+            <div id="store-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Masala Dosa -->
+                <div class="section-bg p-6 flex flex-col items-center dish-card" data-name="Masala Dosa">
+                    <img src="https://placehold.co/400x300?text=Masala+Dosa" alt="Masala Dosa" class="w-full h-56 object-cover rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dish-heading">
+                        <span class="highlight">Masala Dosa</span>
+                    </h3>
+                    <p class="text-gray-600 font-medium">₹<span class="highlight">30</span></p>
+                    <button class="add-to-cart custom-button bg-orange-600 text-white px-6 py-3 mt-4 rounded-full font-semibold hover:bg-orange-700 flex items-center" data-item="Masala Dosa" data-price="30" data-img="https://placehold.co/400x300?text=Masala+Dosa">
+                        <span class="highlight">Add to Cart</span>
+                        <span class="spinner"></span>
+                    </button>
+                </div>
+                <!-- Ghee Karam Dosa -->
+                <div class="section-bg p-6 flex flex-col items-center dish-card" data-name="Ghee Karam Dosa">
+                    <img src="https://placehold.co/400x300?text=Ghee+Karam+Dosa" alt="Ghee Karam Dosa" class="w-full h-56 object-cover rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dish-heading">
+                        <span class="highlight">Ghee Karam Dosa</span>
+                    </h3>
+                    <p class="text-gray-600 font-medium">₹<span class="highlight">30</span></p>
+                    <button class="add-to-cart custom-button bg-orange-600 text-white px-6 py-3 mt-4 rounded-full font-semibold hover:bg-orange-700 flex items-center" data-item="Ghee Karam Dosa" data-price="30" data-img="https://placehold.co/400x300?text=Ghee+Karam+Dosa">
+                        <span class="highlight">Add to Cart</span>
+                        <span class="spinner"></span>
+                    </button>
+                </div>
+                <!-- Egg Dosa -->
+                <div class="section-bg p-6 flex flex-col items-center dish-card" data-name="Egg Dosa">
+                    <img src="https://placehold.co/400x300?text=Egg+Dosa" alt="Egg Dosa" class="w-full h-56 object-cover rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dish-heading">
+                        <span class="highlight">Ghee Karam Dosa</span>
+                    </h3>
+                    <p class="text-gray-600 font-medium">₹<span class="highlight">30</span></p>
+                    <button class="add-to-cart custom-button bg-orange-600 text-white px-6 py-3 mt-4 rounded-full font-semibold hover:bg-orange-700 flex items-center" data-item="Egg Dosa" data-price="30" data-img="https://placehold.co/400x300?text=Egg+Dosa">
+                        <span class="highlight">Add to Cart</span>
+                        <span class="spinner"></span>
+                    </button>
+                </div>
+                <!-- Poori -->
+                <div class="section-bg p-6 flex flex-col items-center dish-card" data-name="Poori">
+                    <img src="https://placehold.co/400x300?text=Poori" alt="Poori" class="w-full h-56 object-cover rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dish-heading">
+                        <span class="highlight">Poori (2 pieces)</span>
+                    </h3>
+                    <p class="text-gray-600 font-medium">₹<span class="highlight">30</span></p>
+                    <button class="add-to-cart custom-button bg-orange-600 text-white px-6 py-3 mt-4 rounded-full font-semibold hover:bg-orange-700 flex items-center" data-item="Poori (2 pieces)" data-price="30" data-img="https://placehold.co/400x300?text=Poori">
+                        <span class="highlight">Add to Cart</span>
+                        <span class="spinner"></span>
+                    </button>
+                </div>
+                <!-- Idli Vada -->
+                <div class="section-bg p-6 flex flex-col items-center dish-card" data-name="Idli Vada">
+                    <img src="https://placehold.co/400x300?text=Idli+Vada" alt="Idli Vada" class="w-full h-56 object-cover rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold text-gray-800 dish-heading">
+                        <span class="highlight">2 Idli + 1 Vada</span>
+                    </h3>
+                    <p class="text-gray-600 font-medium">₹<span class="highlight">20</span></p>
+                    <button class="add-to-cart custom-button bg-orange-600 text-white px-6 py-3 mt-4 rounded-full font-semibold hover:bg-orange-700 flex items-center" data-item="2 Idli + 1 Vada" data-price="20" data-img="https://placehold.co/400x300?text=Idli+Vada">
+                        <span class="highlight">Add to Cart</span>
+                        <span class="spinner"></span>
+                    </button>
+                </div>
+            </div>
+            <p id="no-items-message" class="no-items-message">No items found.</p>
+        </div>
+    </section>
+
+    <!-- Cart Section -->
+    <section id="cart" class="py-20">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-10 text-gray-800 decorated-heading">
+                <span>Your Cart</span>
+            </h2>
+            <div id="cart-items" class="section-bg p-8">
+                <p class="text-gray-600 text-lg">Your cart is empty.</p>
+            </div>
+            <div class="flex justify-between items-center mt-8">
+                <p class="text-2xl font-semibold text-gray-800">
+                    Total: ₹<span id="cart-total" class="highlight">0</span>
+                </p>
+                <button id="proceed-to-pay" class="custom-button bg-orange-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    <span class="highlight">Proceed to Pay</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pop-up -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 dish-heading">
+                <span class="highlight">Thanks for ordering!</span>
+            </h3>
+            <p class="text-gray-600 mb-6">
+                Your item has been <span class="highlight">added to the cart</span>.
+            </p>
+            <button id="close-popup" class="custom-button bg-orange-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-700">
+                <span class="highlight">Close</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-orange-600 to-orange-800 text-white p-6">
+        <div class="container mx-auto text-center">
+            <p class="text-lg">
+                © 2025 <span class="highlight">Babai Hotel</span>. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        let cart = [];
+
+        // Load cart from localStorage if available
+        if (localStorage.getItem('cart')) {
+            cart = JSON.parse(localStorage.getItem('cart'));
+            updateCart();
+        }
+
+        // Search functionality (Exact match)
+        const searchInput = document.getElementById('search-input');
+        const dishCards = document.querySelectorAll('.dish-card');
+        const noItemsMessage = document.getElementById('no-items-message');
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+            let matchFound = false;
+
+            dishCards.forEach(card => {
+                const dishName = card.getAttribute('data-name').toLowerCase();
+                if (query === '' || dishName === query) {
+                    card.style.display = 'flex';
+                    if (query !== '' && dishName === query) {
+                        matchFound = true;
+                        card.classList.add('highlight');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => card.classList.remove('highlight'), 1000);
+                    }
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            noItemsMessage.style.display = query !== '' && !matchFound ? 'block' : 'none';
+        });
+
+        // Add to Cart functionality
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const button = e.currentTarget;
+                const item = button.getAttribute('data-item');
+                const price = parseInt(button.getAttribute('data-price'));
+                const imgSrc = button.getAttribute('data-img');
+                const card = button.closest('.dish-card');
+                const spinner = button.querySelector('.spinner');
+
+                // Apply scale animation
+                button.classList.add('scale-on-click');
+                setTimeout(() => button.classList.remove('scale-on-click'), 200);
+
+                // Show spinner
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+
+                // Shake animation
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 300);
+
+                // Cart item animation
+                const cartIcon = document.getElementById('cart-icon');
+                const cartRect = cartIcon.getBoundingClientRect();
+                const buttonRect = button.getBoundingClientRect();
+                const itemImg = document.createElement('img');
+                itemImg.src = imgSrc;
+                itemImg.className = 'cart-item-animation';
+                itemImg.style.left = `${buttonRect.left + buttonRect.width / 2 - 20}px`;
+                itemImg.style.top = `${buttonRect.top + buttonRect.height / 2 - 20}px`;
+                document.body.appendChild(itemImg);
+
+                // Animate to cart
+                const deltaX = cartRect.left - buttonRect.left;
+                const deltaY = cartRect.top - buttonRect.top;
+                itemImg.style.animation = `moveToCart 0.8s ease forwards`;
+                itemImg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.5)`;
+                setTimeout(() => itemImg.remove(), 800);
+
+                // Show popup
+                const popup = document.getElementById('popup');
+                popup.style.display = 'flex';
+                setTimeout(() => {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                }, 1000);
+
+                // Add item to cart
+                const cartItem = cart.find(i => i.item === item);
+                if (cartItem) {
+                    cartItem.quantity += 1;
+                } else {
+                    cart.push({ item, price, quantity: 1 });
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCart();
+            });
+        });
+
+        // Close popup
+        document.getElementById('close-popup').addEventListener('click', () => {
+            document.getElementById('popup').style.display = 'none';
+        });
+
+        // Update Cart UI
+        function updateCart() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const cartTotalSpan = document.getElementById('cart-total');
+            const cartCountSpan = document.getElementById('cart-count');
+            const proceedButton = document.getElementById('proceed-to-pay');
+
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = '<p class="text-gray-600 text-lg">Your cart is empty.</p>';
+                cartTotalSpan.textContent = '0';
+                cartCountSpan.classList.remove('show');
+                proceedButton.disabled = true;
+            } else {
+                let total = 0;
+                let totalItems = 0;
+                cartItemsDiv.innerHTML = `
+                    <table class="w-full text-left text-gray-700">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="p-3 font-semibold">Item</th>
+                                <th class="p-3 font-semibold">Price</th>
+                                <th class="p-3 font-semibold">Quantity</th>
+                                <th class="p-3 font-semibold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cart.map(item => {
+                                const itemTotal = item.price * item.quantity;
+                                total += itemTotal;
+                                totalItems += item.quantity;
+                                return `
+                                    <tr class="border-b">
+                                        <td class="p-3"><span class="highlight">${item.item}</span></td>
+                                        <td class="p-3">₹<span class="highlight">${item.price}</span></td>
+                                        <td class="p-3"><span class="highlight">${item.quantity}</span></td>
+                                        <td class="p-3">₹<span class="highlight">${itemTotal}</span></td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+                cartTotalSpan.textContent = total;
+                cartCountSpan.textContent = totalItems;
+                cartCountSpan.classList.add('show');
+                proceedButton.disabled = false;
+            }
+        }
+
+        // Proceed to Pay
+        document.getElementById('proceed-to-pay').addEventListener('click', () => {
+            if (cart.length > 0) {
+                alert('Proceeding to payment... (This is a demo, payment gateway not implemented)');
+            }
+        });
+    </script>
+</body>
+</html>
